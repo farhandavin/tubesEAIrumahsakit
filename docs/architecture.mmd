@@ -1,0 +1,69 @@
+flowchart TD
+    CLIENT(["🖥️ Client / Browser"])
+    GATEWAY["🔀 **NGINX API Gateway**\n:80"]
+
+    CLIENT --> GATEWAY
+
+    GATEWAY --> REG
+    GATEWAY --> EMR
+    GATEWAY --> FAR
+    GATEWAY --> BIL
+    GATEWAY --> INT
+
+    subgraph SERVICES ["⚙️ Microservices Layer"]
+        REG["🏥 **Registrasi Pasien**\nREST/JSON · FastAPI\nPostgreSQL · :8001"]
+        EMR["📋 **Rekam Medis (EMR)**\nREST/JSON · FastAPI\nMongoDB · :8002"]
+        FAR["💊 **Farmasi**\nSOAP/XML · Spyne\nMySQL · :8003"]
+        BIL["💰 **Billing & Asuransi**\nREST/JSON · FastAPI\nPostgreSQL · :8004"]
+        INT["🔗 **Integration Hub**\nFastAPI · :8005\nRouter · Transformer · DLQ"]
+    end
+
+    subgraph MQ ["🐰 RabbitMQ Message Broker (AMQP)"]
+        PE[["patient.events\n(fanout exchange)"]]
+        PC[["prescription.created\n(direct)"]]
+        BI[["billing.insurance\n(direct)"]]
+        BC[["billing.cash\n(direct)"]]
+        DLQ[["*.dlq\nDead Letter Queue"]]
+    end
+
+    REG -->|"publish\npatient.registered"| PE
+    PE -->|"subscribe"| INT
+    INT -->|"REST POST /api/records"| EMR
+    INT -->|"REST POST /api/accounts"| BIL
+
+    EMR -->|"publish\nprescription.created"| PC
+    PC -->|"subscribe"| INT
+    INT -->|"SOAP/XML\ndispense_medicine"| FAR
+
+    INT -->|"payment_type == BPJS"| BI
+    INT -->|"payment_type == UMUM"| BC
+    BI -->|"consume"| BIL
+    BC -->|"consume"| BIL
+
+    INT -.->|"on failure\nnack"| DLQ
+
+    subgraph EIP ["📐 Enterprise Integration Patterns"]
+        direction TB
+        E1["① Message Channel"]
+        E2["② Publish-Subscribe"]
+        E3["③ Content-Based Router"]
+        E4["④ Message Translator\n   JSON ↔ XML/SOAP"]
+        E5["⑤ Canonical Data Model"]
+        E6["⑥ Dead Letter Queue"]
+    end
+
+    classDef gateway   fill:#2c3e50,stroke:#2c3e50,color:#fff,font-weight:bold
+    classDef service   fill:#f8f9fa,stroke:#2c3e50,color:#2c3e50
+    classDef hub       fill:#d5e8d4,stroke:#2c3e50,color:#2c3e50,font-weight:bold
+    classDef queue     fill:#fff2cc,stroke:#d6b656,color:#333
+    classDef dlqStyle  fill:#f8cecc,stroke:#b85450,color:#333
+    classDef eip       fill:#dae8fc,stroke:#6c8ebf,color:#333
+    classDef client    fill:#e1d5e7,stroke:#9673a6,color:#333
+
+    class CLIENT client
+    class GATEWAY gateway
+    class REG,EMR,FAR,BIL service
+    class INT hub
+    class PE,PC,BI,BC queue
+    class DLQ dlqStyle
+    class E1,E2,E3,E4,E5,E6 eip

@@ -1,0 +1,279 @@
+version: '3.8'
+
+# ====================================================
+#  Hospital Enterprise Integration System
+#  Docker Compose Orchestration
+# ====================================================
+
+services:
+
+  # ============== DATABASES ==============
+
+  postgres-registrasi:
+    image: postgres:15-alpine
+    container_name: postgres-registrasi
+    environment:
+      POSTGRES_USER: ${REGISTRASI_DB_USER}
+      POSTGRES_PASSWORD: ${REGISTRASI_DB_PASS}
+      POSTGRES_DB: ${REGISTRASI_DB_NAME}
+    volumes:
+      - postgres-registrasi-data:/var/lib/postgresql/data
+    networks:
+      - hospital-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${REGISTRASI_DB_USER} -d ${REGISTRASI_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-billing:
+    image: postgres:15-alpine
+    container_name: postgres-billing
+    environment:
+      POSTGRES_USER: ${BILLING_DB_USER}
+      POSTGRES_PASSWORD: ${BILLING_DB_PASS}
+      POSTGRES_DB: ${BILLING_DB_NAME}
+    volumes:
+      - postgres-billing-data:/var/lib/postgresql/data
+    networks:
+      - hospital-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BILLING_DB_USER} -d ${BILLING_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASS}
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - hospital-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mysql-farmasi:
+    image: mysql:8.0
+    container_name: mysql-farmasi
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${FARMASI_DB_NAME}
+      MYSQL_USER: ${FARMASI_DB_USER}
+      MYSQL_PASSWORD: ${FARMASI_DB_PASS}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - hospital-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ============== MESSAGE BROKER ==============
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    ports:
+      - "15672:15672"   # Management UI (exposed for monitoring)
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - hospital-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # ============== APPLICATION SERVICES ==============
+
+  registrasi-service:
+    build:
+      context: ./services/registrasi
+      dockerfile: Dockerfile
+    container_name: registrasi-service
+    environment:
+      REGISTRASI_DB_HOST: ${REGISTRASI_DB_HOST}
+      REGISTRASI_DB_PORT: ${REGISTRASI_DB_PORT}
+      REGISTRASI_DB_USER: ${REGISTRASI_DB_USER}
+      REGISTRASI_DB_PASS: ${REGISTRASI_DB_PASS}
+      REGISTRASI_DB_NAME: ${REGISTRASI_DB_NAME}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+    depends_on:
+      postgres-registrasi:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hospital-net
+    restart: on-failure
+
+  emr-service:
+    build:
+      context: ./services/emr
+      dockerfile: Dockerfile
+    container_name: emr-service
+    environment:
+      MONGODB_HOST: ${MONGODB_HOST}
+      MONGODB_PORT: ${MONGODB_PORT}
+      MONGODB_USER: ${MONGODB_USER}
+      MONGODB_PASS: ${MONGODB_PASS}
+      MONGODB_DB: ${MONGODB_DB}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      REGISTRASI_SERVICE_HOST: ${REGISTRASI_SERVICE_HOST}
+      REGISTRASI_SERVICE_PORT: ${REGISTRASI_SERVICE_PORT}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      registrasi-service:
+        condition: service_started
+    networks:
+      - hospital-net
+    restart: on-failure
+
+  farmasi-service:
+    build:
+      context: ./services/farmasi
+      dockerfile: Dockerfile
+    container_name: farmasi-service
+    environment:
+      FARMASI_DB_HOST: ${FARMASI_DB_HOST}
+      FARMASI_DB_PORT: ${FARMASI_DB_PORT}
+      FARMASI_DB_USER: ${FARMASI_DB_USER}
+      FARMASI_DB_PASS: ${FARMASI_DB_PASS}
+      FARMASI_DB_NAME: ${FARMASI_DB_NAME}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+    depends_on:
+      mysql-farmasi:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hospital-net
+    restart: on-failure
+
+  billing-service:
+    build:
+      context: ./services/billing
+      dockerfile: Dockerfile
+    container_name: billing-service
+    environment:
+      BILLING_DB_HOST: ${BILLING_DB_HOST}
+      BILLING_DB_PORT: ${BILLING_DB_PORT}
+      BILLING_DB_USER: ${BILLING_DB_USER}
+      BILLING_DB_PASS: ${BILLING_DB_PASS}
+      BILLING_DB_NAME: ${BILLING_DB_NAME}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+    depends_on:
+      postgres-billing:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - hospital-net
+    restart: on-failure
+
+  integration-service:
+    build:
+      context: ./services/integration
+      dockerfile: Dockerfile
+    container_name: integration-service
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      REGISTRASI_SERVICE_HOST: ${REGISTRASI_SERVICE_HOST}
+      REGISTRASI_SERVICE_PORT: ${REGISTRASI_SERVICE_PORT}
+      EMR_SERVICE_HOST: ${EMR_SERVICE_HOST}
+      EMR_SERVICE_PORT: ${EMR_SERVICE_PORT}
+      FARMASI_SERVICE_HOST: ${FARMASI_SERVICE_HOST}
+      FARMASI_SERVICE_PORT: ${FARMASI_SERVICE_PORT}
+      BILLING_SERVICE_HOST: ${BILLING_SERVICE_HOST}
+      BILLING_SERVICE_PORT: ${BILLING_SERVICE_PORT}
+      REGISTRASI_SERVICE_URL: http://${REGISTRASI_SERVICE_HOST}:${REGISTRASI_SERVICE_PORT}
+      EMR_SERVICE_URL: http://${EMR_SERVICE_HOST}:${EMR_SERVICE_PORT}
+      FARMASI_SERVICE_URL: http://${FARMASI_SERVICE_HOST}:${FARMASI_SERVICE_PORT}
+      BILLING_SERVICE_URL: http://${BILLING_SERVICE_HOST}:${BILLING_SERVICE_PORT}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      registrasi-service:
+        condition: service_started
+      emr-service:
+        condition: service_started
+      farmasi-service:
+        condition: service_started
+      billing-service:
+        condition: service_started
+    networks:
+      - hospital-net
+    restart: on-failure
+
+  # ============== API GATEWAY ==============
+
+  api-gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - registrasi-service
+      - emr-service
+      - farmasi-service
+      - billing-service
+      - integration-service
+    networks:
+      - hospital-net
+    restart: on-failure
+
+# ============== VOLUMES ==============
+
+volumes:
+  postgres-registrasi-data:
+    driver: local
+  postgres-billing-data:
+    driver: local
+  mongodb-data:
+    driver: local
+  mysql-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+
+# ============== NETWORKS ==============
+
+networks:
+  hospital-net:
+    driver: bridge
+    name: hospital-integration-network

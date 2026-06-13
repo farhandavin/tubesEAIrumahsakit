@@ -1,0 +1,203 @@
+{
+  "rabbit_version": "3.12.0",
+  "rabbitmq_version": "3.12.0",
+  "users": [
+    {
+      "name": "hospital_admin",
+      "password_hash": "",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {"name": "/"}
+  ],
+  "permissions": [
+    {
+      "user": "hospital_admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "topic_permissions": [],
+  "parameters": [],
+  "global_parameters": [],
+  "policies": [],
+  "queues": [
+    {
+      "name": "patient.registration.integration",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dlx.exchange",
+        "x-dead-letter-routing-key": "patient.registration.integration.dlq"
+      }
+    },
+    {
+      "name": "patient.registration.integration.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "prescription.created",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dlx.exchange",
+        "x-dead-letter-routing-key": "prescription.created.dlq"
+      }
+    },
+    {
+      "name": "prescription.created.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "billing.insurance",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dlx.exchange",
+        "x-dead-letter-routing-key": "billing.insurance.dlq"
+      }
+    },
+    {
+      "name": "billing.insurance.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "billing.cash",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "dlx.exchange",
+        "x-dead-letter-routing-key": "billing.cash.dlq"
+      }
+    },
+    {
+      "name": "billing.cash.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "patient.events",
+      "vhost": "/",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "prescription.events",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "billing.events",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "dlx.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "patient.events",
+      "vhost": "/",
+      "destination": "patient.registration.integration",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "prescription.events",
+      "vhost": "/",
+      "destination": "prescription.created",
+      "destination_type": "queue",
+      "routing_key": "prescription.created",
+      "arguments": {}
+    },
+    {
+      "source": "billing.events",
+      "vhost": "/",
+      "destination": "billing.insurance",
+      "destination_type": "queue",
+      "routing_key": "billing.insurance",
+      "arguments": {}
+    },
+    {
+      "source": "billing.events",
+      "vhost": "/",
+      "destination": "billing.cash",
+      "destination_type": "queue",
+      "routing_key": "billing.cash",
+      "arguments": {}
+    },
+    {
+      "source": "dlx.exchange",
+      "vhost": "/",
+      "destination": "patient.registration.integration.dlq",
+      "destination_type": "queue",
+      "routing_key": "patient.registration.integration.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "dlx.exchange",
+      "vhost": "/",
+      "destination": "prescription.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "prescription.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "dlx.exchange",
+      "vhost": "/",
+      "destination": "billing.insurance.dlq",
+      "destination_type": "queue",
+      "routing_key": "billing.insurance.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "dlx.exchange",
+      "vhost": "/",
+      "destination": "billing.cash.dlq",
+      "destination_type": "queue",
+      "routing_key": "billing.cash.dlq",
+      "arguments": {}
+    }
+  ]
+}

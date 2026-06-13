@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing & Asuransi — Hospital EAI</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-white text-slate-800 font-sans min-h-screen">
+    <!-- Header -->
+    <div class="header bg-blue-600 px-6 py-5 md:px-10 md:py-6 flex items-center gap-4 shadow-md text-white">
+        <span class="icon text-2xl"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight">Sistem Billing & Asuransi</h1>
+        <span class="subtitle ml-auto text-xs text-blue-200/80 hidden sm:inline">Hospital Billing System</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 py-8 md:py-10 bg-white">
+        
+        <!-- Alert Banner -->
+        <div class="alert-banner bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8 flex items-center gap-4 text-sm text-blue-800 shadow-sm">
+            <span class="text-2xl text-blue-500"><i class="fa-solid fa-network-wired"></i></span>
+            <div>Service ini menggunakan <strong>REST/JSON + PostgreSQL</strong>.</div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm">
+                <div class="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-users-viewfinder mr-1"></i> Total Akun</div>
+                <div class="text-3xl font-bold text-blue-700" id="totalAccounts">0</div>
+            </div>
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm">
+                <div class="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-money-bill-trend-up mr-1"></i> Total Revenue</div>
+                <div class="text-3xl font-bold text-blue-800" id="totalRevenue">Rp 0</div>
+            </div>
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm">
+                <div class="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-notes-medical mr-1"></i> BPJS Claims</div>
+                <div class="text-3xl font-bold text-blue-600" id="bpjsClaims">0</div>
+            </div>
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm">
+                <div class="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-wallet mr-1"></i> Cash Payments</div>
+                <div class="text-3xl font-bold text-blue-500" id="cashPayments">0</div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Billing Accounts -->
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm flex flex-col">
+                <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                    <span><i class="fa-solid fa-users text-blue-500"></i></span> Billing Accounts
+                </h2>
+                <div class="overflow-x-auto flex-grow">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-blue-50/50 border-b border-blue-100">
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider">ID</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider">Patient ID</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider">Nama Pasien</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider text-center">Tipe Pembayaran</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accountsBody" class="divide-y divide-blue-50">
+                            <tr><td colspan="5" class="py-8 text-center text-sm text-slate-400 italic empty-state"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat data akun...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Billing Entries -->
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm flex flex-col">
+                <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                    <span><i class="fa-solid fa-receipt text-blue-500"></i></span> Billing Entries
+                </h2>
+                <div class="overflow-x-auto flex-grow">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-blue-50/50 border-b border-blue-100">
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider">ID</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider">Deskripsi</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider text-right">Jumlah</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider text-center">Tipe</th>
+                                <th class="py-3 px-4 text-xs font-semibold text-blue-700 uppercase tracking-wider text-center">Sumber</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesBody" class="divide-y divide-blue-50">
+                            <tr><td colspan="5" class="py-8 text-center text-sm text-slate-400 italic empty-state"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat data entri...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keep Original Scripts! -->
+    <script>
+        const API_BASE = window.location.origin;
+
+        function formatRupiah(n) {
+            return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+        }
+        function paymentBadge(type) {
+            return type === 'BPJS'
+                ? '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-blue-100 text-blue-700">BPJS</span>'
+                : '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-slate-100 text-slate-700">UMUM</span>';
+        }
+        function typeBadge(type) {
+            if (type === 'REGISTRATION') return '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-blue-100 text-blue-700"><i class="fa-solid fa-user-plus mr-1"></i> REG</span>';
+            if (type === 'PRESCRIPTION') return '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-indigo-100 text-indigo-700"><i class="fa-solid fa-pills mr-1"></i> RX</span>';
+            return '<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-slate-100 text-slate-600">' + type + '</span>';
+        }
+
+        async function fetchAccounts() {
+            try {
+                const res = await fetch(API_BASE + '/api/accounts');
+                const data = await res.json();
+                const tbody = document.getElementById('accountsBody');
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-sm text-slate-400 italic empty-state"><i class="fa-solid fa-inbox text-blue-300 text-2xl block mb-2"></i> Belum ada akun billing...</td></tr>';
+                    document.getElementById('totalAccounts').textContent = '0';
+                    return;
+                }
+                document.getElementById('totalAccounts').textContent = data.length;
+                let bpjs = 0, cash = 0;
+                tbody.innerHTML = data.map(a => {
+                    if (a.payment_type === 'BPJS') bpjs++; else cash++;
+                    return `<tr class="hover:bg-blue-50/30 transition-colors">
+                        <td class="py-3 px-4 text-sm text-slate-500 font-medium">${a.id}</td>
+                        <td class="py-3 px-4 text-sm text-slate-500">${a.patient_id}</td>
+                        <td class="py-3 px-4 text-sm text-slate-800 font-semibold">${a.patient_name || '-'}</td>
+                        <td class="py-3 px-4 text-sm text-center">${paymentBadge(a.payment_type)}</td>
+                        <td class="py-3 px-4 text-sm text-center"><span class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-blue-50 text-blue-600"><i class="fa-solid fa-check text-[10px]"></i> ACTIVE</span></td>
+                    </tr>`;
+                }).join('');
+                document.getElementById('bpjsClaims').textContent = bpjs;
+                document.getElementById('cashPayments').textContent = cash;
+            } catch (e) { console.error('Fetch accounts error:', e); }
+        }
+
+        async function fetchEntries() {
+            try {
+                const res = await fetch(API_BASE + '/api/entries');
+                const data = await res.json();
+                const tbody = document.getElementById('entriesBody');
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-sm text-slate-400 italic empty-state"><i class="fa-solid fa-inbox text-blue-300 text-2xl block mb-2"></i> Belum ada entri billing...</td></tr>';
+                    document.getElementById('totalRevenue').textContent = formatRupiah(0);
+                    return;
+                }
+                let total = 0;
+                tbody.innerHTML = data.map(e => {
+                    total += (e.amount || 0);
+                    return `<tr class="hover:bg-blue-50/30 transition-colors">
+                        <td class="py-3 px-4 text-sm text-slate-500 font-medium">${e.id}</td>
+                        <td class="py-3 px-4 text-sm text-slate-800">${e.description || '-'}</td>
+                        <td class="py-3 px-4 text-sm text-blue-600 font-medium text-right">${formatRupiah(e.amount)}</td>
+                        <td class="py-3 px-4 text-sm text-center">${typeBadge(e.entry_type)}</td>
+                        <td class="py-3 px-4 text-sm text-slate-600 text-center"><i class="fa-solid fa-server mr-1 text-slate-400"></i> ${e.source_system || '-'}</td>
+                    </tr>`;
+                }).join('');
+                document.getElementById('totalRevenue').textContent = formatRupiah(total);
+            } catch (e) { console.error('Fetch entries error:', e); }
+        }
+
+        function refresh() { fetchAccounts(); fetchEntries(); }
+        refresh();
+        setInterval(refresh, 5000);
+    
+        // GSAP Animations
+        document.addEventListener("DOMContentLoaded", (event) => {
+            gsap.from(".header", {y: -50, opacity: 0, duration: 0.8, ease: "power3.out"});
+            gsap.from(".card", {y: 30, opacity: 0, duration: 0.8, stagger: 0.15, ease: "power3.out", delay: 0.3});
+            gsap.from(".alert-banner", {scale: 0.95, opacity: 0, duration: 0.5, delay: 0.2});
+            
+            // Watch for new table rows to animate them
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.addedNodes.length) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeName === 'TR' && !node.classList.contains('empty-state')) {
+                                gsap.from(node, {x: -20, opacity: 0, duration: 0.4, ease: "power2.out"});
+                            }
+                        });
+                    }
+                });
+            });
+            
+            document.querySelectorAll('tbody').forEach(tbody => {
+                observer.observe(tbody, { childList: true });
+            });
+        });
+    </script>
+</body>
+</html>

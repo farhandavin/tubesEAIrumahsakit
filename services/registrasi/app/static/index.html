@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Registrasi Pasien</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Toast notification styles preserved for functional safety */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+ 
+        .toast {
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.4s ease, fadeOut 0.4s ease 2.8s forwards;
+            max-width: 380px;
+        }
+ 
+        .toast-success {
+            background: linear-gradient(135deg, #00c896, #00a67d);
+        }
+ 
+        .toast-error {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+ 
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+ 
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans min-h-screen">
+    <!-- Header: Solid blue background matching the design -->
+    <div class="header bg-blue-600 px-6 py-5 md:px-10 md:py-6 flex items-center gap-4 shadow-md text-white">
+        <span class="icon text-2xl"><i class="fa-solid fa-hospital"></i></span>
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight">Sistem Registrasi Pasien</h1>
+        <span class="subtitle ml-auto text-xs text-blue-200/80 hidden sm:inline">Hospital Patient Registration System</span>
+    </div>
+ 
+    <!-- Main Container -->
+    <div class="max-w-6xl mx-auto px-4 py-8 md:py-10 bg-white">
+        
+        <!-- Registration Form Card -->
+        <div class="card bg-white border border-blue-100 rounded-2xl p-6 md:p-8 mb-8 shadow-md">
+            <h2 class="text-lg md:text-xl font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-6">
+                <span><i class="fa-solid fa-clipboard-list text-blue-500"></i></span> Form Registrasi Pasien Baru
+            </h2>
+            <form id="registrationForm" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label for="nama" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Lengkap</label>
+                    <input type="text" id="nama" name="nama" required placeholder="Masukkan nama lengkap" 
+                           class="w-full px-4 py-3 bg-blue-50/30 border border-blue-100 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label for="nik" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">NIK (Nomor Induk Kependudukan)</label>
+                    <input type="text" id="nik" name="nik" required maxlength="16" placeholder="16 digit NIK" 
+                           class="w-full px-4 py-3 bg-blue-50/30 border border-blue-100 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label for="tanggal_lahir" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tanggal Lahir</label>
+                    <input type="date" id="tanggal_lahir" name="tanggal_lahir" required 
+                           class="w-full px-4 py-3 bg-blue-50/30 border border-blue-100 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label for="jenis_kelamin" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jenis Kelamin</label>
+                    <select id="jenis_kelamin" name="jenis_kelamin" required 
+                             class="w-full px-4 py-3 bg-blue-50/30 border border-blue-100 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Cpath fill=%22%232563eb%22 d=%22M6 8L1 3h10z%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_16px_center] pr-10">
+                        <option value="">-- Pilih --</option>
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-1 md:col-span-2">
+                    <label for="alamat" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Alamat</label>
+                    <textarea id="alamat" name="alamat" placeholder="Masukkan alamat lengkap" 
+                               class="w-full px-4 py-3 bg-blue-50/30 border border-blue-100 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all min-h-[90px] resize-vertical"></textarea>
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label for="no_telepon" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">No. Telepon</label>
+                    <input type="tel" id="no_telepon" name="no_telepon" maxlength="15" placeholder="08xxxxxxxxxx" 
+                           class="w-full px-4 py-3 bg-blue-50/30 border border-blue-100 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label for="payment_type" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jenis Pembayaran</label>
+                    <select id="payment_type" name="payment_type" required 
+                             class="w-full px-4 py-3 bg-blue-50/30 border border-blue-100 rounded-lg text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Cpath fill=%22%232563eb%22 d=%22M6 8L1 3h10z%22/%3E%3C/svg%3E')] bg-no-repeat bg-[right_16px_center] pr-10">
+                        <option value="">-- Pilih --</option>
+                        <option value="BPJS">BPJS Kesehatan</option>
+                        <option value="UMUM">Umum (Cash)</option>
+                    </select>
+                </div>
+                <button type="submit" id="btnSubmit" 
+                        class="col-span-1 md:col-span-2 mt-4 py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm tracking-wider rounded-lg uppercase shadow-md transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-plus-circle mr-2"></i> DAFTARKAN PASIEN
+                </button>
+            </form>
+        </div>
+ 
+        <!-- Patients Table Card -->
+        <div class="card bg-white border border-blue-100 rounded-2xl p-6 md:p-8 shadow-md">
+            <h2 class="text-lg md:text-xl font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                <span><i class="fa-solid fa-users text-blue-500"></i></span> Daftar Pasien Terdaftar
+            </h2>
+            <div class="text-xs text-slate-500 mb-4 font-medium" id="patientCount"><i class="fa-solid fa-spinner fa-spin text-blue-400"></i> Memuat data...</div>
+            <div class="overflow-x-auto border border-blue-100 rounded-xl">
+                <table class="w-full border-collapse bg-white">
+                    <thead>
+                        <tr class="bg-blue-50/50 border-b border-blue-100">
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Nama</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">NIK</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Tgl Lahir</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">JK</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Telepon</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Pembayaran</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">Terdaftar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientsTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-10 text-slate-400 italic text-sm">Memuat data pasien...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+ 
+    <div class="toast-container" id="toastContainer"></div>
+ 
+    <script>
+        const API_BASE = '/api';
+ 
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = type === 'success' ? `<i class="fa-solid fa-check-circle mr-2"></i> ${message}` : `<i class="fa-solid fa-exclamation-circle mr-2"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3200);
+        }
+ 
+        // Fetch and display patients
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_BASE}/patients`);
+                if (!response.ok) throw new Error('Failed to fetch patients');
+                const patients = await response.json();
+  
+                const tbody = document.getElementById('patientsTableBody');
+                const countEl = document.getElementById('patientCount');
+ 
+                if (patients.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-slate-400 italic text-sm">Belum ada pasien terdaftar</td></tr>';
+                    countEl.innerHTML = '<i class="fa-solid fa-info-circle text-blue-400"></i> Total: 0 pasien';
+                    return;
+                }
+ 
+                countEl.innerHTML = `<i class="fa-solid fa-users text-blue-400"></i> Total: ${patients.length} pasien`;
+                tbody.innerHTML = patients.map(p => {
+                    const jkClass = p.jenis_kelamin === 'L' 
+                        ? 'bg-blue-100 text-blue-700' 
+                        : p.jenis_kelamin === 'P' 
+                            ? 'bg-pink-100 text-pink-700' 
+                            : 'bg-slate-100 text-slate-500';
+                    
+                    const paymentClass = p.payment_type === 'BPJS' 
+                        ? 'bg-emerald-100 text-emerald-700' 
+                        : p.payment_type === 'UMUM' 
+                            ? 'bg-blue-100 text-blue-700' 
+                            : 'bg-slate-100 text-slate-600';
+ 
+                    return `
+                        <tr class="hover:bg-blue-50/30 transition-colors border-b border-slate-100">
+                            <td class="px-6 py-4 text-sm text-slate-500 font-medium">${p.id}</td>
+                            <td class="px-6 py-4 text-sm text-slate-900 font-semibold">${p.nama}</td>
+                            <td class="px-6 py-4 text-sm text-slate-500">${p.nik}</td>
+                            <td class="px-6 py-4 text-sm text-slate-500">${p.tanggal_lahir || '-'}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${jkClass}">
+                                    ${p.jenis_kelamin === 'L' ? 'Laki-laki' : p.jenis_kelamin === 'P' ? 'Perempuan' : '-'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-500">${p.no_telepon || '-'}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${paymentClass}">
+                                    ${p.payment_type || '-'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-500">${p.created_at ? new Date(p.created_at).toLocaleString('id-ID') : '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Error loading patients:', err);
+            }
+        }
+ 
+        // Handle form submission
+        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> MENDAFTARKAN...';
+ 
+            const formData = {
+                nama: document.getElementById('nama').value.trim(),
+                nik: document.getElementById('nik').value.trim(),
+                tanggal_lahir: document.getElementById('tanggal_lahir').value,
+                jenis_kelamin: document.getElementById('jenis_kelamin').value,
+                alamat: document.getElementById('alamat').value.trim(),
+                no_telepon: document.getElementById('no_telepon').value.trim(),
+                payment_type: document.getElementById('payment_type').value,
+            };
+ 
+            try {
+                const response = await fetch(`${API_BASE}/patients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData),
+                });
+ 
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Gagal mendaftarkan pasien');
+                }
+ 
+                const result = await response.json();
+                showToast(`Pasien "${result.nama}" berhasil didaftarkan!`, 'success');
+                document.getElementById('registrationForm').reset();
+                await loadPatients();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-plus-circle mr-2"></i> DAFTARKAN PASIEN';
+            }
+        });
+ 
+        // Initial load
+        loadPatients();
+    
+        // GSAP Animations
+        document.addEventListener("DOMContentLoaded", (event) => {
+            gsap.from(".header", {y: -50, opacity: 0, duration: 0.8, ease: "power3.out"});
+            gsap.from(".card", {y: 30, opacity: 0, duration: 0.8, stagger: 0.15, ease: "power3.out", delay: 0.3});
+            
+            // Watch for new table rows to animate them
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.addedNodes.length) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeName === 'TR' && !node.classList.contains('empty-state')) {
+                                gsap.from(node, {x: -20, opacity: 0, duration: 0.4, ease: "power2.out"});
+                            }
+                        });
+                    }
+                });
+            });
+            
+            const tbody = document.querySelector('tbody');
+            if (tbody) {
+                observer.observe(tbody, { childList: true });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Rekam Medis (EMR)</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .records-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .records-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .records-grid::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .records-grid::-webkit-scrollbar-thumb {
+            background: #bfdbfe;
+            border-radius: 3px;
+        }
+
+        .prescription-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .notification {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 400px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans min-h-screen">
+    <!-- Header -->
+    <div class="header bg-blue-600 px-6 py-5 md:px-10 md:py-6 flex items-center gap-4 shadow-md text-white">
+        <span class="icon text-2xl"><i class="fa-solid fa-file-medical"></i></span>
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight">Sistem Rekam Medis (EMR)</h1>
+            <p class="text-xs text-blue-200 mt-1">Dashboard Elektronik untuk Manajemen Rekam Medis Pasien</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 py-8 md:py-10 grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white">
+        
+        <!-- Medical Records List -->
+        <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-md flex flex-col">
+            <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                <span><i class="fa-solid fa-address-book text-blue-500"></i></span> Daftar Rekam Medis
+            </h2>
+            <div id="records-container" class="records-grid flex-grow">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+
+        <!-- Prescription Form -->
+        <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-md flex flex-col">
+            <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                <span><i class="fa-solid fa-prescription-bottle-medical text-blue-500"></i></span> Form Resep Dokter
+            </h2>
+            <div id="form-container" class="flex-grow flex flex-col justify-center">
+                <div class="text-center py-10 text-slate-400">
+                    <div class="text-4xl mb-4 text-blue-300"><i class="fa-solid fa-hand-pointer"></i></div>
+                    <p class="text-sm font-medium">Pilih pasien dari daftar untuk membuat resep</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prescription History -->
+        <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-md lg:col-span-2">
+            <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                <span><i class="fa-solid fa-clock-rotate-left text-blue-500"></i></span> Riwayat Resep
+            </h2>
+            <div id="prescription-container">
+                <div class="text-center py-10 text-slate-400">
+                    <div class="text-4xl mb-4 text-blue-300"><i class="fa-solid fa-file-invoice"></i></div>
+                    <p class="text-sm font-medium">Pilih pasien untuk melihat riwayat resep</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let selectedPatientId = null;
+        let allRecords = [];
+
+        // ── Notification ──────────────────────────────────
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.innerHTML = type === 'success' ? `<i class="fa-solid fa-check-circle mr-2"></i> ${message}` : `<i class="fa-solid fa-exclamation-circle mr-2"></i> ${message}`;
+            notif.className = `notification ${type} show`;
+            setTimeout(() => notif.classList.remove('show'), 3500);
+        }
+
+        // ── Format date ───────────────────────────────────
+        function formatDate(isoString) {
+            if (!isoString) return '-';
+            const d = new Date(isoString);
+            return d.toLocaleDateString('id-ID', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        // ── Load Records ──────────────────────────────────
+        async function loadRecords() {
+            try {
+                const res = await fetch('/api/records');
+                if (!res.ok) throw new Error('Failed to fetch');
+                allRecords = await res.json();
+                renderRecords();
+            } catch (err) {
+                console.error('Error loading records:', err);
+            }
+        }
+
+        function renderRecords() {
+            const container = document.getElementById('records-container');
+            if (allRecords.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400 col-span-full">
+                        <div class="text-4xl mb-4 text-blue-300"><i class="fa-solid fa-folder-open"></i></div>
+                        <p class="text-sm font-medium">Belum ada rekam medis</p>
+                    </div>`;
+                return;
+            }
+
+            const uniqueRecords = [];
+            const seenIds = new Set();
+            for (const record of allRecords) {
+                if (!seenIds.has(record.patient_id)) {
+                    seenIds.add(record.patient_id);
+                    uniqueRecords.push(record);
+                }
+            }
+
+            container.innerHTML = uniqueRecords.map(record => {
+                const hasPrescriptions = record.prescriptions && record.prescriptions.length > 0;
+                const isActive = selectedPatientId === record.patient_id;
+                
+                const activeClasses = isActive ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-blue-100 bg-white hover:border-blue-300 hover:shadow-md';
+                const dotClass = hasPrescriptions ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-400';
+
+                return `
+                    <div class="rounded-xl border p-4 cursor-pointer transition-all relative ${activeClasses}"
+                         onclick="selectPatient(${record.patient_id})">
+                        <div class="absolute top-4 right-4 w-2.5 h-2.5 rounded-full ${dotClass}"></div>
+                        <div class="text-base font-semibold text-slate-800 mb-1 pr-6">${escapeHtml(record.patient_name)}</div>
+                        <div class="text-xs text-slate-500 font-mono mb-3">ID: ${record.patient_id}</div>
+                        <div class="flex gap-3 mb-2">
+                            <div class="bg-blue-50 px-2 py-1 rounded text-[10px] font-semibold text-blue-600 uppercase tracking-wider">Diagnosa: ${(record.diagnoses || []).length}</div>
+                            <div class="bg-blue-50 px-2 py-1 rounded text-[10px] font-semibold text-blue-600 uppercase tracking-wider">Resep: ${(record.prescriptions || []).length}</div>
+                        </div>
+                        <div class="text-[10px] text-slate-400 font-medium"><i class="fa-regular fa-calendar-alt mr-1"></i> ${formatDate(record.created_at)}</div>
+                    </div>`;
+            }).join('');
+        }
+
+        // ── Select Patient ────────────────────────────────
+        function selectPatient(patientId) {
+            selectedPatientId = patientId;
+            renderRecords();
+            showPrescriptionForm(patientId);
+            loadPrescriptionHistory(patientId);
+        }
+
+        // ── Prescription Form ─────────────────────────────
+        function showPrescriptionForm(patientId) {
+            const record = allRecords.find(r => r.patient_id === patientId);
+            if (!record) return;
+
+            const container = document.getElementById('form-container');
+            container.innerHTML = `
+                <form id="prescription-form" onsubmit="submitPrescription(event)" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Patient ID</label>
+                            <input type="text" value="${patientId}" readonly class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 cursor-not-allowed" />
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Pasien</label>
+                            <input type="text" value="${escapeHtml(record.patient_name)}" readonly class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 cursor-not-allowed" />
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Dokter</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><i class="fa-solid fa-user-doctor"></i></div>
+                            <input type="text" id="doctor-name" placeholder="Dr. ..." required class="w-full pl-9 pr-3 py-2 bg-white border border-blue-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Diagnosis</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><i class="fa-solid fa-stethoscope"></i></div>
+                            <input type="text" id="diagnosis" placeholder="Masukkan diagnosis" required class="w-full pl-9 pr-3 py-2 bg-white border border-blue-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex justify-between items-center">
+                            Daftar Obat
+                            <button type="button" onclick="addMedicineRow()" class="text-blue-600 hover:text-blue-800 focus:outline-none"><i class="fa-solid fa-circle-plus"></i> Tambah</button>
+                        </label>
+                        <div class="flex flex-col gap-2" id="medicine-items">
+                            <div class="medicine-row flex gap-2 items-center">
+                                <input type="text" placeholder="Nama Obat" class="med-name flex-grow px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all" required />
+                                <input type="number" placeholder="Qty" class="med-qty w-16 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm text-center focus:outline-none focus:border-blue-500 transition-all" min="1" value="1" required />
+                                <input type="text" placeholder="Dosis" class="med-dosage w-24 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all" required />
+                                <button type="button" onclick="removeMedicineRow(this)" class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fa-solid fa-times"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="mt-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm tracking-wider rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-save"></i> SIMPAN RESEP
+                    </button>
+                </form>`;
+        }
+
+        function addMedicineRow() {
+            const container = document.getElementById('medicine-items');
+            const row = document.createElement('div');
+            row.className = 'medicine-row flex gap-2 items-center mt-2';
+            row.innerHTML = `
+                <input type="text" placeholder="Nama Obat" class="med-name flex-grow px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all" required />
+                <input type="number" placeholder="Qty" class="med-qty w-16 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm text-center focus:outline-none focus:border-blue-500 transition-all" min="1" value="1" required />
+                <input type="text" placeholder="Dosis" class="med-dosage w-24 px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-all" required />
+                <button type="button" onclick="removeMedicineRow(this)" class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i class="fa-solid fa-times"></i></button>`;
+            container.appendChild(row);
+        }
+
+        function removeMedicineRow(btn) {
+            const rows = document.querySelectorAll('#medicine-items .medicine-row');
+            if (rows.length > 1) {
+                btn.closest('.medicine-row').remove();
+            }
+        }
+
+        // ── Submit Prescription ───────────────────────────
+        async function submitPrescription(event) {
+            event.preventDefault();
+
+            const doctorName = document.getElementById('doctor-name').value.trim();
+            const diagnosis = document.getElementById('diagnosis').value.trim();
+
+            const rows = document.querySelectorAll('#medicine-items .medicine-row');
+            const items = [];
+            for (const row of rows) {
+                const name = row.querySelector('.med-name').value.trim();
+                const qty = parseInt(row.querySelector('.med-qty').value);
+                const dosage = row.querySelector('.med-dosage').value.trim();
+                if (!name || !dosage) {
+                    showNotification('Lengkapi semua field obat!', 'error');
+                    return;
+                }
+                items.push({ medicine_name: name, quantity: qty, dosage: dosage });
+            }
+
+            const payload = {
+                doctor_name: doctorName,
+                diagnosis: diagnosis,
+                items: items
+            };
+
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYIMPAN...';
+
+            try {
+                const res = await fetch(`/api/records/${selectedPatientId}/prescriptions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Gagal menyimpan resep');
+                }
+
+                showNotification('Resep berhasil disimpan!', 'success');
+                await loadRecords();
+                selectPatient(selectedPatientId);
+            } catch (err) {
+                showNotification(err.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        }
+
+        // ── Prescription History ──────────────────────────
+        function loadPrescriptionHistory(patientId) {
+            const record = allRecords.find(r => r.patient_id === patientId);
+            const container = document.getElementById('prescription-container');
+
+            if (!record || !record.prescriptions || record.prescriptions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-400">
+                        <div class="text-4xl mb-4 text-blue-300"><i class="fa-solid fa-file-invoice"></i></div>
+                        <p class="text-sm font-medium">Belum ada resep untuk pasien ini</p>
+                    </div>`;
+                return;
+            }
+
+            const prescriptions = [...record.prescriptions].reverse();
+            container.innerHTML = `<div class="prescription-list grid grid-cols-1 md:grid-cols-2 gap-4">${prescriptions.map(p => {
+                const paymentType = p.payment_type || 'UNKNOWN';
+                const paymentClass = paymentType.toLowerCase().includes('bpjs') ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                    : paymentType.toLowerCase().includes('umum') ? 'bg-blue-100 text-blue-700 border-blue-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200';
+
+                return `
+                    <div class="bg-white border border-blue-100 rounded-xl p-5 hover:shadow-md hover:border-blue-300 transition-all">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="font-semibold text-slate-800 text-sm flex items-center gap-2"><i class="fa-solid fa-user-doctor text-blue-500"></i> ${escapeHtml(p.doctor_name || '-')}</div>
+                            <div class="text-[10px] text-slate-500 font-medium"><i class="fa-regular fa-clock mr-1"></i> ${formatDate(p.created_at)}</div>
+                        </div>
+                        <div class="text-sm text-blue-700 font-medium mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-stethoscope"></i> ${escapeHtml(p.diagnosis || '-')}
+                        </div>
+                        <div class="mb-3">
+                            <span class="inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${paymentClass}">${escapeHtml(paymentType)}</span>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                            <ul class="flex flex-col gap-2">
+                                ${(p.items || []).map(item =>
+                                    `<li class="text-xs text-slate-600 flex items-start gap-2">
+                                        <i class="fa-solid fa-capsules text-blue-400 mt-0.5"></i> 
+                                        <span><strong class="text-slate-800">${escapeHtml(item.medicine_name)}</strong> &mdash; ${item.quantity}x &mdash; ${escapeHtml(item.dosage)}</span>
+                                    </li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    </div>`;
+            }).join('')}</div>`;
+        }
+
+        // ── Utility ───────────────────────────────────────
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ── Auto-refresh ─────────────────────────────────
+        loadRecords();
+        setInterval(loadRecords, 5000);
+    
+        // GSAP Animations
+        document.addEventListener("DOMContentLoaded", (event) => {
+            gsap.from(".header", {y: -50, opacity: 0, duration: 0.8, ease: "power3.out"});
+            gsap.from(".card", {y: 30, opacity: 0, duration: 0.8, stagger: 0.15, ease: "power3.out", delay: 0.3});
+        });
+    </script>
+</body>
+</html>

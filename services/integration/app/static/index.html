@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integration Hub — Hospital EAI</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #fff; display: inline-block; margin-right: 8px; animation: blink 2s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        
+        .arrow { color: #3b82f6; font-size: 1.5rem; padding: 0 0.5rem; animation: arrowMove 1.5s ease-in-out infinite; }
+        @keyframes arrowMove { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot.online { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.5); }
+        .dot.offline { background: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans min-h-screen">
+    <!-- Header -->
+    <div class="header bg-blue-600 px-6 py-5 md:px-10 md:py-6 flex items-center gap-4 shadow-md text-white">
+        <span class="status-dot"></span>
+        <span class="icon text-2xl"><i class="fa-solid fa-server"></i></span>
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight">Integration Hub</h1>
+        <span class="subtitle ml-auto text-xs text-blue-200/80 hidden sm:inline">Enterprise Application Integration</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 py-8 md:py-10 bg-white">
+
+        <!-- Flow Diagram -->
+        <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm mb-8">
+            <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-6">
+                <span><i class="fa-solid fa-diagram-project text-blue-500"></i></span> Integration Flow
+            </h2>
+            <div class="flex flex-wrap items-center justify-center gap-2 p-6 bg-blue-50/30 border border-blue-100 rounded-xl relative overflow-hidden">
+                <div class="bg-white border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-600"><i class="fa-solid fa-hospital"></i></div><div class="font-semibold text-sm">Registrasi</div><div class="text-[0.65rem] text-slate-500 mt-1">REST/JSON + PostgreSQL</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-500"><i class="fa-solid fa-network-wired"></i></div><div class="font-semibold text-sm">RabbitMQ</div><div class="text-[0.65rem] text-slate-500 mt-1">AMQP Broker</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-blue-600 border border-blue-700 rounded-lg p-4 text-center min-w-[180px] shadow-sm hover:bg-blue-700 hover:shadow-md transition-all text-white">
+                    <div class="text-2xl mb-2"><i class="fa-solid fa-link"></i></div><div class="font-semibold text-sm">Integration Service</div><div class="text-[0.65rem] text-blue-200 mt-1">Router + Transformer</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-white border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-600"><i class="fa-solid fa-file-medical"></i></div><div class="font-semibold text-sm">EMR</div><div class="text-[0.65rem] text-slate-500 mt-1">REST/JSON + MongoDB</div>
+                </div>
+                <div class="w-full h-4"></div>
+                <div class="bg-white border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-600"><i class="fa-solid fa-file-prescription"></i></div><div class="font-semibold text-sm">EMR</div><div class="text-[0.65rem] text-slate-500 mt-1">Prescription Created</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-500"><i class="fa-solid fa-network-wired"></i></div><div class="font-semibold text-sm">RabbitMQ</div><div class="text-[0.65rem] text-slate-500 mt-1">prescription.created</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-indigo-400 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-indigo-500"><i class="fa-solid fa-right-left"></i></div><div class="font-semibold text-sm">Translator</div><div class="text-[0.65rem] text-slate-500 mt-1">JSON → XML</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-white border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-600"><i class="fa-solid fa-pills"></i></div><div class="font-semibold text-sm">Farmasi</div><div class="text-[0.65rem] text-slate-500 mt-1">SOAP/XML + MySQL</div>
+                </div>
+                <div class="w-full h-4"></div>
+                <div class="bg-sky-50 border border-sky-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-sky-400 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-sky-500"><i class="fa-solid fa-code-branch"></i></div><div class="font-semibold text-sm">Content Router</div><div class="text-[0.65rem] text-slate-500 mt-1">payment_type check</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-500"><i class="fa-solid fa-layer-group"></i></div><div class="font-semibold text-sm">BPJS Queue</div><div class="text-[0.65rem] text-slate-500 mt-1">billing.insurance</div>
+                </div>
+                <div class="mx-4 text-slate-400 text-sm italic">atau</div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-500"><i class="fa-solid fa-layer-group"></i></div><div class="font-semibold text-sm">Cash Queue</div><div class="text-[0.65rem] text-slate-500 mt-1">billing.cash</div>
+                </div>
+                <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="bg-white border border-blue-200 rounded-lg p-4 text-center min-w-[140px] shadow-sm hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-2xl mb-2 text-blue-600"><i class="fa-solid fa-file-invoice-dollar"></i></div><div class="font-semibold text-sm">Billing</div><div class="text-[0.65rem] text-slate-500 mt-1">REST/JSON + PostgreSQL</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connected Systems -->
+        <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm mb-8">
+            <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-6">
+                <span><i class="fa-solid fa-network-wired text-blue-500"></i></span> Connected Systems
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-5 hover:border-blue-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3"><span class="text-2xl text-blue-600"><i class="fa-solid fa-hospital"></i></span><span class="font-semibold text-slate-800">Registrasi Pasien</span></div>
+                    <div class="flex items-center gap-2 text-sm mb-2"><span class="dot" id="dot-reg"></span><span id="status-reg" class="font-medium text-slate-500">Checking...</span></div>
+                    <div class="text-xs text-slate-500">REST/JSON <i class="fa-solid fa-arrow-right mx-1"></i> Port 8001</div>
+                </div>
+                <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-5 hover:border-blue-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3"><span class="text-2xl text-blue-600"><i class="fa-solid fa-file-medical"></i></span><span class="font-semibold text-slate-800">Rekam Medis (EMR)</span></div>
+                    <div class="flex items-center gap-2 text-sm mb-2"><span class="dot" id="dot-emr"></span><span id="status-emr" class="font-medium text-slate-500">Checking...</span></div>
+                    <div class="text-xs text-slate-500">REST/JSON + MongoDB <i class="fa-solid fa-arrow-right mx-1"></i> Port 8002</div>
+                </div>
+                <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-5 hover:border-blue-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3"><span class="text-2xl text-blue-600"><i class="fa-solid fa-pills"></i></span><span class="font-semibold text-slate-800">Farmasi</span></div>
+                    <div class="flex items-center gap-2 text-sm mb-2"><span class="dot" id="dot-far"></span><span id="status-far" class="font-medium text-slate-500">Checking...</span></div>
+                    <div class="text-xs text-slate-500">SOAP/XML + MySQL <i class="fa-solid fa-arrow-right mx-1"></i> Port 8003</div>
+                </div>
+                <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-5 hover:border-blue-300 transition-all">
+                    <div class="flex items-center gap-3 mb-3"><span class="text-2xl text-blue-600"><i class="fa-solid fa-file-invoice-dollar"></i></span><span class="font-semibold text-slate-800">Billing & Asuransi</span></div>
+                    <div class="flex items-center gap-2 text-sm mb-2"><span class="dot" id="dot-bil"></span><span id="status-bil" class="font-medium text-slate-500">Checking...</span></div>
+                    <div class="text-xs text-slate-500">REST/JSON + PostgreSQL <i class="fa-solid fa-arrow-right mx-1"></i> Port 8004</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8 mb-8">
+            <!-- EIP Patterns -->
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm flex flex-col">
+                <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                    <span><i class="fa-solid fa-puzzle-piece text-blue-500"></i></span> Enterprise Integration Patterns
+                </h2>
+                <div class="flex flex-col gap-4 flex-grow">
+                    <div class="p-4 bg-white border border-blue-100 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
+                        <div class="font-bold text-sm text-blue-600 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">1</span> Message Channel</div>
+                        <div class="text-xs text-slate-600 leading-relaxed">Queue RabbitMQ dedikasi per domain: patient.registration, prescription.created, billing.insurance, billing.cash</div>
+                    </div>
+                    <div class="p-4 bg-white border border-blue-100 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
+                        <div class="font-bold text-sm text-blue-600 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">2</span> Publish-Subscribe</div>
+                        <div class="text-xs text-slate-600 leading-relaxed">Event registrasi pasien dipublish ke fanout exchange, diterima oleh multiple consumer (EMR + Billing)</div>
+                    </div>
+                    <div class="p-4 bg-white border border-blue-100 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
+                        <div class="font-bold text-sm text-blue-600 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">3</span> Content-Based Router</div>
+                        <div class="text-xs text-slate-600 leading-relaxed">Integration service memeriksa payment_type: BPJS diroute ke billing.insurance, UMUM ke billing.cash</div>
+                    </div>
+                    <div class="p-4 bg-white border border-blue-100 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
+                        <div class="font-bold text-sm text-blue-600 mb-1 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">4</span> Message Translator</div>
+                        <div class="text-xs text-slate-600 leading-relaxed">Transformasi JSON <i class="fa-solid fa-arrow-right-arrow-left text-[10px] mx-1"></i> XML/SOAP untuk komunikasi dengan Farmasi yang menggunakan protokol berbeda</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card bg-white border border-blue-100 rounded-xl p-6 shadow-sm flex flex-col">
+                <h2 class="text-lg font-bold text-blue-600 flex items-center gap-2 pb-4 border-b border-blue-50 mb-4">
+                    <span><i class="fa-solid fa-clock-rotate-left text-blue-500"></i></span> Recent Activity
+                </h2>
+                <div class="bg-blue-50/30 border border-blue-100 rounded-lg p-4 flex-grow max-h-[400px] overflow-y-auto" id="activityLog">
+                    <div class="text-center py-8 text-sm text-slate-400 italic empty-state"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Menunggu aktivitas integrasi...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keep Original Scripts! -->
+    <script>
+        async function checkService(name, dotId, statusId, url) {
+            try {
+                const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+                if (res.ok) {
+                    document.getElementById(dotId).className = 'dot online';
+                    document.getElementById(statusId).textContent = 'Online';
+                    document.getElementById(statusId).className = 'font-medium text-emerald-600';
+                    return true;
+                }
+            } catch (e) {}
+            document.getElementById(dotId).className = 'dot offline';
+            document.getElementById(statusId).textContent = 'Offline';
+            document.getElementById(statusId).className = 'font-medium text-red-500';
+            return false;
+        }
+
+        async function checkAllSystems() {
+            // Determine base URL for services — in Docker, all go through nginx
+            const origin = window.location.origin;
+            await Promise.all([
+                checkService('Registrasi', 'dot-reg', 'status-reg', origin.replace(/\/integration\/?$/, '') + '/registrasi/api/health'),
+                checkService('EMR', 'dot-emr', 'status-emr', origin.replace(/\/integration\/?$/, '') + '/emr/api/health'),
+                checkService('Farmasi', 'dot-far', 'status-far', origin.replace(/\/integration\/?$/, '') + '/farmasi/api/health'),
+                checkService('Billing', 'dot-bil', 'status-bil', origin.replace(/\/integration\/?$/, '') + '/billing/api/health'),
+            ]);
+        }
+
+        async function fetchActivity() {
+            try {
+                const res = await fetch(window.location.origin + '/api/status');
+                const data = await res.json();
+                const log = document.getElementById('activityLog');
+                if (data.recent_events && data.recent_events.length > 0) {
+                    log.innerHTML = data.recent_events.map(e => {
+                        let typeClass = 'bg-slate-100 text-slate-600';
+                        if (e.type && e.type.includes('patient')) typeClass = 'bg-blue-100 text-blue-700';
+                        if (e.type && e.type.includes('prescription')) typeClass = 'bg-indigo-100 text-indigo-700';
+                        if (e.type && e.type.includes('billing')) typeClass = 'bg-sky-100 text-sky-700';
+                        if (e.type && e.type.includes('error')) typeClass = 'bg-red-100 text-red-700';
+                        
+                        return `<div class="py-3 border-b border-blue-50 last:border-0 flex gap-4 text-sm items-center hover:bg-blue-50 transition-colors">
+                            <span class="text-slate-400 whitespace-nowrap text-[10px] uppercase font-medium"><i class="fa-regular fa-clock"></i> ${e.timestamp || ''}</span>
+                            <span class="text-slate-800 flex-grow truncate font-medium">${e.message || e.type || ''}</span>
+                            <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase ${typeClass}">${e.type || 'event'}</span>
+                        </div>`;
+                    }).join('');
+                }
+            } catch (e) { /* Integration service may not have activity yet */ }
+        }
+
+        checkAllSystems();
+        fetchActivity();
+        setInterval(checkAllSystems, 10000);
+        setInterval(fetchActivity, 5000);
+    
+        // GSAP Animations
+        document.addEventListener("DOMContentLoaded", (event) => {
+            gsap.from(".header", {y: -50, opacity: 0, duration: 0.8, ease: "power3.out"});
+            gsap.from(".card", {y: 30, opacity: 0, duration: 0.8, stagger: 0.15, ease: "power3.out", delay: 0.3});
+        });
+    </script>
+</body>
+</html>
